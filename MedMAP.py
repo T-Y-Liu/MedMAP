@@ -1,24 +1,20 @@
         if self.is_training:
-            # softmax weight
             w = F.softmax(self.weights, dim=0)
 
-            # 直接用原始特征，不 detach
             p_mix = w[2] * t1_x1 + w[3] * t2_x1 + w[1] * t1ce_x1 + w[0] * flair_x1
 
-            # alignment loss
             align_loss = (F.mse_loss(t1_x1, p_mix) +
                         F.mse_loss(t2_x1, p_mix) +
                         F.mse_loss(t1ce_x1, p_mix) +
                         F.mse_loss(flair_x1, p_mix)) / 8
 
-            # 替换缺失模态
             final_features = []
             modal_features = [flair_x1, t1ce_x1, t1_x1, t2_x1]
             for i in range(4):
                 if mask[0, i].item():
-                    final_features.append(modal_features[i])  # 不需要乘w[i]
+                    final_features.append(modal_features[i])  
                 else:
-                    final_features.append(p_mix)  # 可以乘w[i]也可以不乘，看设计
+                    final_features.append(p_mix)  
            
             flair_x1, t1ce_x1, t1_x1, t2_x1 = final_features
 
@@ -40,7 +36,6 @@
             weights = weights / weights.sum()  
             p_mix = sum(wi * fi for wi, fi in zip(weights, available_features))
 
-            # 构建最终的四个特征
             final_features = []
             for i in range(4):
                 if mask[0, i].item():
